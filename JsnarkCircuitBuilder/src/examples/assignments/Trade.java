@@ -1,6 +1,3 @@
-/*******************************************************************************
- * Author: Ahmed Kosba <akosba@cs.umd.edu>
- *******************************************************************************/
 package examples.assignments;
 
 import util.Util;
@@ -55,10 +52,34 @@ public class Trade extends CircuitGenerator {
 
 	@Override
 	public void generateSampleInput(CircuitEvaluator circuitEvaluator) {
-		String send = "Alice";
-		String recv = "Bob";
+		
 		Wire product = new Wire(currentWireId);
 		circuitEvaluator.setWireValue(product, Util.nextRandomBigInteger(Config.FIELD_PRIME));
+		Wire[] productBitWires = product.getBitWires(256).asArray();
+		
+		String send = "Alice";
+		String recv = "Bob";
+
+		int length = send.length() + recv.length() + 256;
+
+		Wire[] concat = createInputWireArray(length);
+
+		int idx = 0;
+		for(int i = 0; i < send.length(); i++, idx++) {
+			circuitEvaluator.setWireValue(concat[idx], send.charAt(i));
+		}
+		for(int i = 0; i < recv.length(); i++, idx++) {
+			circuitEvaluator.setWireValue(concat[idx], send.charAt(i));
+		}
+		for(int i = 0; i < product.length(); i++, idx++) {
+			circuitEvaluator.setWireValue(concat[idx], send.charAt(i));
+		}
+		String outDigest = "";
+		for(Wire w: generator.getOutputWires()) {
+			outDigest += Util.padZeros(evaluator.getWireValue(w).toString(16), 8);
+		}
+
+
 		for(int i = 0; i < hashDigestDimension * treeHeight; i++) {
 			circuitEvaluator.setWireValue(publicRootWires[i], Util.nextRandomBigInteger(Config.FIELD_PRIME));
 		}
@@ -69,8 +90,10 @@ public class Trade extends CircuitGenerator {
 		}
 
 		for(int i = 0; i < leafNumOfWords; i++) {
-			circuitEvaluator.setWireValue(leafWires[i], Integer.MAX_VALUE);
+			// circuitEvaluator.setWireValue(leafWires[i], Integer.MAX_VALUE);
+			circuitEvaluator.setWireValue(leafWires[i], Util.nextRandomBigInteger(Config.FIELD_PRIME));
 		}
+		circuitEvaluator.setWireValue(Util.nextRandomBigInteger(Config.FIELD_PRIME)%leafNumOfWords, outDigest);
 	}
 
 	public static void main(String[] args) throws Exception {
